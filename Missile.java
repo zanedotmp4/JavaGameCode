@@ -40,8 +40,8 @@ public class Missile {
         this.missileSize = missileSize;
         this.missileSpeed = missileSpeed;
         shape = new Ellipse2D.Double(0, 0, missileSize, missileSize);
-        shotImages = new BufferedImage[4];
-        for (int i = 0; i < 4; i++) {
+        shotImages = new BufferedImage[9];
+        for (int i = 0; i < 9; i++) {
             shotImages[i] = ImageManager.loadBufferedImage("Shot1/shot1_" + (i + 1) + ".png");
         }
     }

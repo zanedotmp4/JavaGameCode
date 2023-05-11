@@ -5,6 +5,9 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.Area;
 import java.awt.geom.Path2D;
 import java.awt.image.BufferedImage;
+import java.awt.Color;
+import java.util.Map;
+import java.util.HashMap;
 //Jarod Esareesingh 
 //816026811
 public class Alien extends HealthRender {
@@ -15,7 +18,6 @@ public class Alien extends HealthRender {
     public float angle = 0;
     public Area alienShape;
     public BufferedImage alienImg;
-    private int type;
     public static double alienRocketSize;
 
     // Initialize an instance of the Alien class
@@ -23,7 +25,6 @@ public class Alien extends HealthRender {
         // Call the constructor of the parent class (Entity) with a Health object as parameter
         super(new Health(20, 20));
         // Load the Img of the alien
-        this.type = type;
         this.alienImg = ImageManager.loadBufferedImage("images/Ship" + type + ".png");
     
         // Set the alienRocketSize based on the dimensions of the alienImg
@@ -104,6 +105,32 @@ public class Alien extends HealthRender {
         afx.translate(x, y);
         return new Area(afx.createTransformedShape(alienShape));
     }
+
+    public Color getDominantColor() {
+        int width = alienImg.getWidth();
+        int height = alienImg.getHeight();
+        Map<Color, Integer> colorCountMap = new HashMap<>();
+    
+        for (int x = 0; x < width; x++) {
+            for (int y = 0; y < height; y++) {
+                int colorRGB = alienImg.getRGB(x, y);
+                Color color = new Color(colorRGB, true);
+    
+                // Skip transparent pixels
+                if (color.getAlpha() == 0) {
+                    continue;
+                }
+    
+                colorCountMap.put(color, colorCountMap.getOrDefault(color, 0) + 1);
+            }
+        }
+    
+        return colorCountMap.entrySet().stream()
+            .max(Map.Entry.comparingByValue())
+            .map(Map.Entry::getKey)
+            .orElse(Color.WHITE);
+    }
+    
 
     // This method checks if the alien rocket is out of bounds or not
     // It takes in the width and height of the screen as parameters

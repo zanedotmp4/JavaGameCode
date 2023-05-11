@@ -33,9 +33,6 @@ public class GameWindow extends JFrame
 	private JPanel mainPanel;
 	private GamePanel gamePanel;
 
-	private boolean isPaused=true;
-
-	@SuppressWarnings({ "unchecked" })
 	public GameWindow() {
 
 		setTitle("Assignment #2");
@@ -181,7 +178,7 @@ public class GameWindow extends JFrame
 
 	public void keyPressed(KeyEvent e) {
 		int keyCode = e.getKeyCode();
-		String keyText = e.getKeyText(keyCode);
+		String keyText = KeyEvent.getKeyText(keyCode);
 		keyTF.setText(keyText + " pressed.");
 		
 		gamePanel.initializeKeys();

@@ -2,6 +2,8 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Shape;
 import java.awt.geom.Rectangle2D;
+import java.awt.GradientPaint;
+
 //Jarod Esareesingh 
 //816026811
 public class HealthRender {
@@ -15,13 +17,30 @@ public class HealthRender {
     protected void renderHealthBar(Graphics2D g2, Shape shape, double y) {
         if (health.getCurrentHealth() != health.getMAXhealth()) {
             double healthY = shape.getBounds().getY() - y - 10;
-            g2.setColor(new Color(70, 70, 70));
-            g2.fill(new Rectangle2D.Double(0, healthY, Ship.shipSize, 2));
-            g2.setColor(new Color(253, 91, 91));
+    
+            // Draw background (black) for health bar
+            g2.setColor(Color.BLACK);
+            g2.fill(new Rectangle2D.Double(0, healthY, Ship.shipSize, 6));
+    
+            // Draw gradient health bar
             double healthSize = health.getCurrentHealth() / health.getMAXhealth() * Ship.shipSize;
-            g2.fill(new Rectangle2D.Double(0, healthY, healthSize, 2));
+            GradientPaint gradient = new GradientPaint(0, (float) healthY, new Color(91, 186, 253), (float) healthSize, (float) healthY, new Color(253, 91, 91));
+            g2.setPaint(gradient);
+            g2.fill(new Rectangle2D.Double(0, healthY + 1, healthSize, 4));
+    
+            // Draw border around health bar
+            g2.setColor(Color.WHITE);
+            g2.draw(new Rectangle2D.Double(0, healthY, Ship.shipSize, 6));
+    
+            // Draw animated glow effect
+            long currentTime = System.currentTimeMillis();
+            float glowIntensity = (float) (0.5 + 0.5 * Math.sin(currentTime * 0.005));
+            Color glowColor = new Color(1.0f, 1.0f, 1.0f, glowIntensity);
+            g2.setColor(glowColor);
+            g2.draw(new Rectangle2D.Double(0, healthY - 1, healthSize, 8));
         }
     }
+    
     
     public boolean updateHealth(double damage) {
         health.setCurrentHealth(health.getCurrentHealth() - damage);

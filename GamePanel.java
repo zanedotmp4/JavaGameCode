@@ -10,7 +10,6 @@ import java.awt.event.KeyEvent;
 import java.awt.geom.Area;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
-import java.security.PrivateKey;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -31,7 +30,6 @@ public class GamePanel extends JComponent {
     private Image backgroundImage;
     private int w;
     private int h;
-    private int totalScore;
     private Thread gameThread;
     private boolean startGameBool = true;
     private boolean isPaused = false;
@@ -43,6 +41,7 @@ public class GamePanel extends JComponent {
     private Ship ship;
     private int remainingTime = 30;
     private boolean levelComplete = false;
+    private boolean playerDead= false;
     private float opacity = 0.9f;
     private float opacityChange = 0.01f;
     private int background = 1;
@@ -149,6 +148,7 @@ public class GamePanel extends JComponent {
                             ship.setAlive(false);
                             gameSounds.stopBackground();
                             gameSounds.soundPlayerDeath();
+                            level = 1;
                             double x = ship.getX() + Ship.shipSize / 2;
                             double y = ship.getY() + Ship.shipSize / 2;
                             explosionEffects.add(new ExplosionEffect(x, y, 5, 5, 75, 0.05f, new Color(255, 165, 0))); // orange
@@ -198,7 +198,7 @@ public class GamePanel extends JComponent {
         aliens.add(alien3);
         // watch out
 
-        if (firstLevelBeaten) {
+        if (level >= 2) {
             int locY4 = ran.nextInt(w - 50) + 25;
             Alien alien4 = new Alien(alienType);
             alien4.changeShipLoc(locY4, 0);
@@ -210,7 +210,7 @@ public class GamePanel extends JComponent {
             alien5.modifyShipAngle(270f);
             aliens.add(alien5);
         }
-        if (level == 3) {
+        if (level >= 3) {
             Alien topLeftAlien = new Alien(alienType);
             topLeftAlien.changeShipLoc(0, 0);
             topLeftAlien.modifyShipAngle(45); // Angle to move diagonally
@@ -265,7 +265,7 @@ public class GamePanel extends JComponent {
                 drawNextLevelMessage();
             } else {
                 startNextLevel();
-                levelComplete = false; // this line resets the levelComplete flag
+               // levelComplete = false; // this line resets the levelComplete flag
             }
         }
     }
@@ -349,6 +349,12 @@ public class GamePanel extends JComponent {
         missiles.clear();
         ship.changeShipLoc(150, 150);
         ship.resetGame();
+        countdownTimer.restart();
+        if(playerDead){
+            level = 1;
+            playerDead = false;
+        }
+        
     }
 
     public void initializeKeys() {
@@ -488,7 +494,7 @@ public class GamePanel extends JComponent {
                 remainingTime = 30;
                 // levelComplete = false;
                 startNextLevel();
-                levelComplete = false;
+                //levelComplete = false;
             } else {
                 reset();
             }
@@ -563,16 +569,17 @@ public class GamePanel extends JComponent {
                                     new Color(255, 70, 70)));
 
                     // update alien health
-                    if (!alien.updateHealth(missile.returnSize())) {
+                    if (!alien.updateHealth(Math.abs(missile.returnSize()))) {
                         // alien destroyed
                         score++;
-                        totalScore++;
                         aliens.remove(alien);
                         gameSounds.soundDestroy();
 
                         // create bigger explosion effect at alien position
                         double x = alien.returnX() + Alien.alienRocketSize / 2;
                         double y = alien.returnY() + Alien.alienRocketSize / 2;
+                        Color dominantColor = alien.getDominantColor();
+                        explosionEffects.add(new ExplosionEffect(x, y, 7, 20, 120, 0.6f, dominantColor));
                         explosionEffects.add(new ExplosionEffect(x, y, 10, 20, 200, 0.5f, new Color(255, 200, 0)));
                         explosionEffects.add(new ExplosionEffect(x, y, 5, 40, 150, 0.4f, new Color(255, 70, 70)));
                         explosionEffects.add(new ExplosionEffect(x, y, 3, 60, 100, 0.3f, new Color(255, 255, 255)));
@@ -613,16 +620,18 @@ public class GamePanel extends JComponent {
             gameSounds.soundDestroy();
             double x = alien.returnX() + Alien.alienRocketSize / 2;
             double y = alien.returnY() + Alien.alienRocketSize / 2;
+            Color dominantColor = alien.getDominantColor();
             explosionEffects.add(new ExplosionEffect(x, y, 5, 5, 75, 0.05f, new Color(255, 165, 0))); // orange
             explosionEffects.add(new ExplosionEffect(x, y, 5, 5, 75, 0.1f, new Color(255, 255, 0))); // yellow
-            explosionEffects.add(new ExplosionEffect(x, y, 10, 10, 100, 0.3f, new Color(255, 69, 0))); // deep orange
-            explosionEffects.add(new ExplosionEffect(x, y, 10, 5, 100, 0.5f, new Color(255, 0, 0))); // red
+            explosionEffects.add(new ExplosionEffect(x, y, 5, 10, 75, 0.05f, dominantColor));
+            explosionEffects.add(new ExplosionEffect(x, y, 10, 3, 100, 0.5f, new Color(255, 0, 0))); // red
             explosionEffects.add(new ExplosionEffect(x, y, 10, 5, 150, 0.2f, new Color(255, 255, 255))); // white
         } else {
             gameSounds.soundHit();
         }
 
-        if (!ship.updateHealth(alienHealth)) {
+        if (!ship.updateHealth(Math.abs(alienHealth))) {
+
             // ship destroyed
             ship.setAlive(false);
             gameSounds.stopBackground();
@@ -729,10 +738,10 @@ public class GamePanel extends JComponent {
         drawLevel();
         // Draw game over screen if ship is dead
         if (!ship.isIntact()) {
-            // TODO: play ship dead sound
-
+            playerDead = true;
             // Draw game over text
-            String text = "YOU HAVE DESTROYED " + score + " ALIEN SHIPS!";
+            String text = "YOU HAVE DIED AT LEVEL " + level;
+            levelComplete = false;
             graphics.setFont(getFont().deriveFont(Font.BOLD, 25f));
             FontMetrics font = graphics.getFontMetrics();
             Rectangle2D rect = font.getStringBounds(text, graphics);
@@ -745,6 +754,7 @@ public class GamePanel extends JComponent {
             // Draw key prompt text
             String textKey = "Press the enter key if you wish to Continue ...";
             graphics.setFont(getFont().deriveFont(Font.BOLD, 19f));
+            
             font = graphics.getFontMetrics();
             rect = font.getStringBounds(textKey, graphics);
             textWidth = rect.getWidth();
